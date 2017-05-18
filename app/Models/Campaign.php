@@ -36,7 +36,7 @@ class Campaign extends BaseModel
         return $this->hasMany(Event::class);
     }
 
-    public function medias()
+    public function media()
     {
         return $this->morphMany(Media::class, 'mediable');
     }
