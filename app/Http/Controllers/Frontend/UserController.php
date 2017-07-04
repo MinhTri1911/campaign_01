@@ -36,4 +36,17 @@ class UserController extends FrontendController
                 ->with('messages-fail', tran_choice('messages.login_fail', 1));
         }
     }
+
+    public function demo($id)
+    {
+        // $x = $this->repository->findOrFail($id)->campaigns()->with('events')->with('actions')->get();
+        // $y = $this->repository->findOrFail($id)->with('campaigns')->with('events')->with('actions')->get();
+        $x = $this->repository->findOrFail($id)
+            ->followers()
+                ->with('followers')->with('followed')->get();
+        $y = $this->repository->findOrFail($id)
+                ->with('followers')->with('followed')->get();
+        dd($x, $this->repository->findOrFail($id)
+            ->followers, $y);
+    }
 }

@@ -15,6 +15,7 @@ import User from '../components/user/User.vue'
 import Password from '../components/user/Password.vue'
 import Profile from '../components/user/Profile.vue'
 import Setting from '../components/user/Setting.vue'
+import Chat from '../components/chat/Chat.vue'
 
 const router = [
     ...authGuard([{
@@ -60,7 +61,8 @@ const router = [
                         component: Video,
                     },
                 ]
-            }
+            },
+            { path: '/chat', component: Chat }
         ]
     }]),
     ...guestGuard([

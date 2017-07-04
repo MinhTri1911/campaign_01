@@ -18,6 +18,12 @@ Route::get('/images/{path}', function (Illuminate\Http\Request $request, $path) 
     return app('glide')->getImageResponse($path, $request->all());
 })->where('path', '.*');
 
+// Route::get('demo/{id}', 'Frontend\UserController@demo');
+
+// Route::get('socket', 'SocketController@index');
+// Route::post('sendmessage', 'SocketController@sendMessage');
+// Route::get('writemessage', 'SocketController@writemessage');
+
 Route::get('/{vue_capture?}', function () {
     return view('app');
 })->where('vue_capture', '[\/\w\.-]*');
