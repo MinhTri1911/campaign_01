@@ -31,7 +31,20 @@ class ChatController extends ApiController
     public function showMessages(Request $request, $id)
     {
         $groupKey = $this->getNameGroupChat($this->user->id, $id, json_decode($request->type));
-        $keyMessages = json_decode($this->redis->get($groupKey));
+        $start = json_decode($request->paginate);
+        $stop = $start + config('settings.paginate_default');
+        $keyMessages = $this->redis->command('lrange', [
+            $groupKey,
+            $start,
+            $stop,
+        ]);
+
+        if (!$keyMessages) {
+            return response()->json([
+                'status' => NOT_FOUND,
+            ]);
+        }
+
         $keyMessages = is_array($keyMessages) ? $keyMessages : [$keyMessages];
         $messages = [];
 
@@ -46,6 +59,7 @@ class ChatController extends ApiController
         return response()->json([
             'status' => CODE_OK,
             'messages' => $messages,
+            'paginate' => ++$stop,
         ]);
     }
 
@@ -137,12 +151,11 @@ class ChatController extends ApiController
         $groupKey = $this->getNameGroupChat($this->user->id, $receive, $status);
         $idMessage = $this->user->id . '-' . $receive . '-' . \Carbon\Carbon::now()->format('m/d/Y:H:i:s');
 
-        if (!$this->redis->get($groupKey)) {
-            $this->redis->set($groupKey, json_encode([$idMessage]));
-        } else {
-            $ids = json_decode($this->redis->get($groupKey));
-            $this->redis->set($groupKey, json_encode(array_collapse([$ids, [$idMessage]])));
+        if (!$groupKey || !$idMessage) {
+            throw new Exception();
         }
+
+        $this->redis->lpush($groupKey, $idMessage);
 
         return [
             'group' => $groupKey,
@@ -162,18 +175,35 @@ class ChatController extends ApiController
             throw new Exception();
         }
 
+        if (is_numeric($toReceive)) {
+            $receive = $this->userRepository->findOrFail($toReceive);
+        } else {
+            $receive = $this->campaignRepository
+                ->where('hashtag', strstr($toReceive, 8, strlen($toReceive)))
+                ->with('media')
+                ->first();
+        }
+
         $message = json_encode([
             'groupKey' => $keys['group'],
             'userId' => $this->user->id,
             'message' => $content,
+            'name' => $this->user->name,
+            'avatar' => $this->user->url_file,
+            'time' => \Carbon\Carbon::now()->format('m/d/Y H:i:s'),
         ]);
 
         $this->redis->set($keys['idMessage'], $message);
 
         $data = [
             'from' => (string)$this->user->id,
-            'name' => $this->user->name,
+            'fromName' => $this->user->name,
+            'fromAvatar' => $this->user->url_file,
             'to' => $toReceive,
+            'toName' => is_numeric($toReceive) ? $receive->name : $receive->title,
+            'toAvatar' => is_numeric($toReceive)
+                ? $receive->url_file
+                : $receive->media->first()->url_file,
             'groupChat' => $keys['group'],
             'message' => $message,
             'success' => true,

@@ -147,6 +147,7 @@
                         <a href="#" class="view-all bg-blue">Check all your Events</a>
                     </div>
                 </div>
+
                 <div class="control-icon more has-items">
                     <svg class="olymp-chat---messages-icon">
                         <use xlink:href="frontend/icons/icons.svg#olymp-chat---messages-icon"></use>
@@ -160,86 +161,13 @@
                         </div>
                         <div class="mCustomScrollbar" data-mcs-theme="dark">
                             <ul class="notification-list chat-message">
-                                <li class="message-unread">
+                                <li class="message-unread" v-for="mess in messages">
                                     <div class="author-thumb">
-                                        <img src="/images/avatar59-sm.jpg" alt="author">
+                                        <img :src="mess.showAvatar" alt="author">
                                     </div>
                                     <div class="notification-event">
-                                        <a href="#" class="h6 notification-friend">Diana Jameson</a>
-                                        <span class="chat-message-item">Hi James! It’s Diana, I just wanted to let you know that we have to reschedule...</span>
-                                        <span class="notification-date">
-                                            <time class="entry-date updated" datetime="2004-07-24T18:18">4 hours ago</time>
-                                        </span>
-                                    </div>
-                                    <span class="notification-icon">
-                                        <svg class="olymp-chat---messages-icon">
-                                            <use xlink:href="frontend/icons/icons.svg#olymp-chat---messages-icon"></use>
-                                        </svg>
-                                    </span>
-                                    <div class="more">
-                                        <svg class="olymp-three-dots-icon">
-                                            <use xlink:href="frontend/icons/icons.svg#olymp-three-dots-icon"></use>
-                                        </svg>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="author-thumb">
-                                        <img src="/images/avatar60-sm.jpg" alt="author">
-                                    </div>
-                                    <div class="notification-event">
-                                        <a href="#" class="h6 notification-friend">Jake Parker</a>
-                                        <span class="chat-message-item">Great, I’ll see you tomorrow!.</span>
-                                        <span class="notification-date">
-                                            <time class="entry-date updated" datetime="2004-07-24T18:18">4 hours ago</time>
-                                        </span>
-                                    </div>
-                                    <span class="notification-icon">
-                                        <svg class="olymp-chat---messages-icon">
-                                            <use xlink:href="frontend/icons/icons.svg#olymp-chat---messages-icon"></use>
-                                        </svg>
-                                    </span>
-                                    <div class="more">
-                                        <svg class="olymp-three-dots-icon">
-                                            <use xlink:href="frontend/icons/icons.svg#olymp-three-dots-icon"></use>
-                                        </svg>
-                                    </div>
-                                </li>
-                                <li>
-                                    <div class="author-thumb">
-                                        <img src="/images/avatar61-sm.jpg" alt="author">
-                                    </div>
-                                    <div class="notification-event">
-                                        <a href="#" class="h6 notification-friend">Elaine Dreyfuss</a>
-                                        <span class="chat-message-item">We’ll have to check that at the office and see if the client is on board with...</span>
-                                        <span class="notification-date">
-                                            <time class="entry-date updated" datetime="2004-07-24T18:18">Yesterday at 9:56pm</time>
-                                        </span>
-                                    </div>
-                                    <span class="notification-icon">
-                                        <svg class="olymp-chat---messages-icon">
-                                            <use xlink:href="frontend/icons/icons.svg#olymp-chat---messages-icon"></use>
-                                        </svg>
-                                    </span>
-                                    <div class="more">
-                                        <svg class="olymp-three-dots-icon">
-                                            <use xlink:href={{ asset('frontend/icons/icons.svg#olymp-three-dots-icon') }}></use>
-                                        </svg>
-                                    </div>
-                                </li>
-                                <li class="chat-group">
-                                    <div class="author-thumb">
-                                        <img src="/images/avatar11-sm.jpg" alt="author">
-                                        <img src="/images/avatar12-sm.jpg" alt="author">
-                                        <img src="/images/avatar13-sm.jpg" alt="author">
-                                        <img src="/images/avatar10-sm.jpg" alt="author">
-                                    </div>
-                                    <div class="notification-event">
-                                        <a href="#" class="h6 notification-friend">You, Faye, Ed &amp; Jet +3</a>
-                                        <span class="last-message-author">Ed:</span>
-                                        <span class="chat-message-item">Yeah! Seems fine by me!</span>
-                                        <span class="notification-date">
-                                            <time class="entry-date updated" datetime="2004-07-24T18:18">March 16th at 10:23am</time>
-                                        </span>
+                                        <a href="#" class="h6 notification-friend">{{ mess.showName }}</a>
+                                        <span class="chat-message-item">{{ mess.message }}</span>
                                     </div>
                                     <span class="notification-icon">
                                         <svg class="olymp-chat---messages-icon">
@@ -257,6 +185,7 @@
                         <a href="#" class="view-all bg-purple">View All Messages</a>
                     </div>
                 </div>
+
                 <div class="control-icon more has-items">
                     <svg class="olymp-thunder-icon">
                         <use xlink:href="frontend/icons/icons.svg#olymp-thunder-icon"></use>
@@ -537,15 +466,22 @@ import { logout } from '../../../router/router'
 import { post } from '../../../helpers/api'
 
 export default {
+    data: () => ({
+        messages: []
+    }),
     computed: {
         ...mapState('auth', {
             authenticated: state => state.authenticated,
-            user: state => state.user
+            user: state => state.user,
+            groups: state => state.groups
         })
+    },
+    updated() {
+        this.pushList()
     },
     methods: {
         ...mapActions('auth', [
-            'logout',
+            'logout'
         ]),
         handleLogout() {
             post(logout).then(res => {
@@ -553,6 +489,74 @@ export default {
             }).catch(err => {
                 this.$router.push('/')
             })
+        },
+        pushList() {
+            const listGroups = []
+
+            for (var index = 0; index < this.groups.length; index++) {
+                let group = {
+                    campaignId: this.groups[index].id,
+                    hashtag: this.groups[index].hashtag
+                }
+
+                listGroups.push(group)
+            }
+
+            this.$socket.emit('demo', { userId: this.user.id, groups: listGroups })
+        },
+        receiveMessage(data, option) {
+            var socketData = JSON.parse(data)
+
+            if (socketData.success
+                && (option && (socketData.to == this.user.id || socketData.from == this.user.id))
+                || (!option && this.groups.findIndex(group => group.hashtag == socketData.to))
+            ) {
+                var message = JSON.parse(socketData.message)
+                let index = null
+
+                if (option) {
+                    index = this.messages.findIndex(mess => mess.from == this.user.id
+                        || mess.to == this.user.id)
+
+                    console.log(index, this.messages)
+                } else {
+                    console.log(socketData)
+                    index = this.messages.findIndex(mess => mess.groupChat == socketData.groupChat)
+                }
+
+                let mess = {
+                    from: socketData.from,
+                    to: socketData.to,
+                    groupChat: socketData.groupChat,
+                    message: message.message,
+                    showName: (socketData.from == this.user.id || !option)
+                        ? socketData.toName
+                        : socketData.fromName,
+                    showAvatar: (socketData.from == this.user.id || !option)
+                        ? socketData.toAvatar
+                        : socketData.fromAvatar
+                }
+
+                if (index == -1) {
+                    this.messages.unshift(mess)
+                } else {
+                    this.messages.splice(index, 1)
+                    this.messages.unshift(mess)
+                }
+
+                // console.log(this.messages)
+            //     this.paginate++
+            //     $('#' + this.replaceSpace(this.receiveUser))
+            //         .scrollTop($('#' + this.replaceSpace(this.receiveUser))[0].scrollHeight)
+            }
+        }
+    },
+    sockets: {
+        singleChat: function (data) {
+            this.receiveMessage(data, true)
+        },
+        groupChat: function (data) {
+            this.receiveMessage(data, false)
         }
     }
 }
