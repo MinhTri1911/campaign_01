@@ -37,7 +37,7 @@ class ActivityRepository extends BaseRepository implements ActivityInterface
                         ->whereIn('activitiable_id', $campaignIds);
                 });
         })
-        ->whereIn('user_id', $friendIds)
+        ->orWhereIn('user_id', $friendIds)
         ->with('user')
         ->orderBy('created_at', 'DESC')
         ->paginate(config('settings.pagination.homepage'));
